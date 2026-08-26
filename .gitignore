@@ -1,0 +1,42 @@
+# Nix build outputs
+/result
+result
+result-*
+
+# direnv cache
+.direnv/
+
+# Local env overrides
+.envrc.local
+.env
+.env.*
+
+# Keep real .envrc trackable if you add one intentionally
+!.envrc
+
+# Editor/OS noise
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Local secrets and machine-private material
+secrets/
+secrets.nix
+*.agekey
+*.key
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# Backup/temp files
+*.bak
+*.backup
+*.tmp

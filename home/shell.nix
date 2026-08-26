@@ -1,6 +1,4 @@
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   programs.git = {
     enable = true;
     settings = {
@@ -87,6 +85,7 @@
       nrs = "sudo nixos-rebuild switch --flake /home/char0/nixconfig#nixos";
       nru = "nix flake update --flake /home/char0/nixconfig && sudo nixos-rebuild switch --flake /home/char0/nixconfig#nixos";
       arturo = "ssh -i ~/.ssh/arturo root@arturo";
+      ntfy = "ssh -i ~/.ssh/char0 ubuntu@ntfy";
       cat = "bat";
     };
 
@@ -126,6 +125,10 @@
       cursor_mode
 
       export TERM=xterm-ghostty
+      ssh() {
+          TERM=xterm-256color command ssh "$@"
+      }
+
       case "$TERM" in xterm-color|*-256color|xterm-ghostty) color_prompt=yes;; esac
 
       export GPG_TTY=$(tty)

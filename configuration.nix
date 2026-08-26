@@ -1,15 +1,16 @@
 # Edit this configuration file to define what should be installed on
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
-
-{ config, pkgs, ... }:
-
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
-  
+  config,
+  pkgs,
+  ...
+}: {
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
+
   # Kernel Verison
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
@@ -22,7 +23,8 @@
 
   # Add networking hostName for arturo
   networking.hosts = {
-    "10.0.50.21" = [ "arturo" ];
+    "10.0.50.21" = ["arturo"];
+    "10.0.10.33" = ["ntfy"];
   };
 
   # Enable networking
@@ -69,7 +71,7 @@
   users.users."char0" = {
     isNormalUser = true;
     description = "Charles Deane";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = ["networkmanager" "wheel"];
   };
 
   # Allow unfree packages
@@ -77,8 +79,8 @@
 
   # Enable flakes
   nix.settings.experimental-features = [
-    "nix-command" 
-    "flakes" 
+    "nix-command"
+    "flakes"
   ];
 
   # Enable gnome keyring
@@ -154,7 +156,7 @@
       enable = true;
 
       defaultFonts = {
-        monospace = [ "Hack" ];
+        monospace = ["Hack"];
       };
     };
   };
@@ -198,7 +200,7 @@
     enable = true;
     setSocketVariable = true;
   };
-  
+
   # Enable zsh
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
@@ -218,5 +220,4 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "26.05"; # Did you read the comment?
-
 }

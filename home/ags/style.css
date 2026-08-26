@@ -1,0 +1,344 @@
+window#bluetooth-panel,
+window#wifi-panel,
+window#system-panel,
+window#wallpaper-panel,
+window#volume-osd {
+  background: transparent;
+  color: #f8f8f2;
+  font-family: Hack, monospace;
+}
+
+window#bluetooth-panel *,
+window#wifi-panel *,
+window#system-panel *,
+window#wallpaper-panel *,
+window#volume-osd * {
+  font-family: Hack, monospace;
+}
+
+#volume-osd-shell {
+  background: alpha(#282a36, 0.94);
+  border: 1px solid alpha(#f8f8f2, 0.72);
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 12px 34px alpha(#000000, 0.42);
+  padding: 8px 14px;
+}
+
+#volume-osd-label,
+#volume-osd-label-muted {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  min-width: 44px;
+}
+
+#volume-osd-label {
+  color: #bd93f9;
+}
+
+#volume-osd-label-muted {
+  color: #ff5555;
+}
+
+#volume-osd-value {
+  color: #f8f8f2;
+  font-size: 18px;
+  font-weight: 900;
+  min-width: 50px;
+}
+
+#volume-osd-meter,
+#volume-osd-meter-muted {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+#volume-osd-meter {
+  color: #50fa7b;
+}
+
+#volume-osd-meter-muted {
+  color: #6272a4;
+}
+
+#system-shell {
+  background: alpha(#282a36, 0.92);
+  border: 1px solid alpha(#f8f8f2, 0.72);
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 10px 30px alpha(#000000, 0.36);
+  min-height: 0;
+  padding: 4px 12px;
+}
+
+#system-segment {
+  background: alpha(#44475a, 0.62);
+  border: 1px solid alpha(#6272a4, 0.42);
+  border-radius: 999px;
+  min-width: 0;
+  padding: 2px 7px;
+}
+
+#system-segment-label {
+  color: #bd93f9;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+#system-segment-value {
+  color: #f8f8f2;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+#system-segment-meter {
+  color: #50fa7b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+#wallpaper-shell {
+  background: alpha(#282a36, 0.94);
+  border: 1px solid alpha(#f8f8f2, 0.72);
+  border-radius: 22px;
+  box-shadow: 0 22px 60px alpha(#000000, 0.46);
+  padding: 22px;
+}
+
+#wallpaper-header {
+  margin-bottom: 18px;
+}
+
+#wallpaper-title {
+  color: #f8f8f2;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+#wallpaper-subtitle {
+  color: #bd93f9;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+#wallpaper-scroll {
+  background: transparent;
+  border: 0;
+}
+
+#wallpaper-grid {
+  background: transparent;
+}
+
+button#wallpaper-tile,
+button#wallpaper-tile-selected {
+  background: alpha(#44475a, 0.62);
+  border: 1px solid alpha(#6272a4, 0.42);
+  border-radius: 16px;
+  color: #f8f8f2;
+  min-width: 278px;
+  padding: 9px;
+}
+
+button#wallpaper-tile:hover,
+button#wallpaper-tile-selected:hover {
+  background: alpha(#44475a, 0.84);
+  border-color: alpha(#ff79c6, 0.72);
+}
+
+button#wallpaper-tile-selected {
+  border-color: #ff79c6;
+  box-shadow: 0 0 0 1px alpha(#ff79c6, 0.42);
+}
+
+#wallpaper-preview,
+#wallpaper-thumbnail,
+#wallpaper-placeholder {
+  border-radius: 11px;
+  min-height: 146px;
+  min-width: 260px;
+}
+
+#wallpaper-placeholder {
+  background: alpha(#282a36, 0.78);
+  border: 1px solid alpha(#6272a4, 0.36);
+}
+
+#wallpaper-placeholder-ext {
+  color: #50fa7b;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+#wallpaper-placeholder-status {
+  color: #6272a4;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+#wallpaper-name {
+  color: #f8f8f2;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#bluetooth-shell,
+#wifi-shell {
+  background: alpha(#282a36, 0.9);
+  border: 1px solid #f8f8f2;
+  border-right: 0;
+  border-radius: 18px 0 0 18px;
+  box-shadow: 0 18px 48px alpha(#000000, 0.45);
+  margin: 0;
+  min-height: 500px;
+  min-width: 360px;
+  padding: 22px;
+}
+
+#bluetooth-header,
+#wifi-header {
+  margin-bottom: 18px;
+}
+
+#bluetooth-scroll,
+#wifi-scroll {
+  background: transparent;
+  border: 0;
+}
+
+#bluetooth-title,
+#wifi-title {
+  color: #f8f8f2;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+#bluetooth-subtitle,
+#wifi-subtitle {
+  color: #bd93f9;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+#bluetooth-spinner,
+#wifi-spinner {
+  color: #bd93f9;
+  min-height: 18px;
+  min-width: 18px;
+}
+
+button#bluetooth-device,
+button#wifi-device {
+  background: alpha(#44475a, 0.72);
+  border: 1px solid alpha(#6272a4, 0.42);
+  border-radius: 16px;
+  color: #f8f8f2;
+  padding: 14px;
+}
+
+button#wifi-device {
+  padding: 12px;
+}
+
+button#bluetooth-device:hover,
+button#wifi-device:hover {
+  background: alpha(#44475a, 0.92);
+  border-color: alpha(#ff79c6, 0.62);
+}
+
+#device-dot,
+#device-dot-connected,
+#wifi-dot,
+#wifi-dot-connected {
+  font-size: 12px;
+}
+
+#device-dot,
+#wifi-dot {
+  color: alpha(#6272a4, 0.35);
+}
+
+#device-dot-connected,
+#wifi-dot-connected {
+  color: #50fa7b;
+}
+
+#device-icon,
+#wifi-icon {
+  color: #f8f8f2;
+}
+
+#device-icon-fallback {
+  background: alpha(#6272a4, 0.28);
+  border-radius: 8px;
+  color: #f8f8f2;
+  font-size: 10px;
+  font-weight: 800;
+  min-height: 22px;
+  min-width: 22px;
+}
+
+#device-name,
+#wifi-name {
+  color: #f8f8f2;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#device-status,
+#wifi-status {
+  color: #6272a4;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+#device-battery {
+  margin-left: 10px;
+}
+
+#device-battery-icon,
+#device-battery-label,
+#wifi-lock-icon,
+#wifi-strength-label {
+  color: #6272a4;
+  font-size: 12px;
+}
+
+#wifi-strength {
+  margin-left: 10px;
+}
+
+#wifi-password-row {
+  margin: 8px 0 0 0;
+}
+
+#wifi-password {
+  background: alpha(#282a36, 0.82);
+  border: 1px solid alpha(#6272a4, 0.55);
+  border-radius: 10px;
+  color: #f8f8f2;
+  min-width: 0;
+  padding: 6px 8px;
+}
+
+#wifi-password-actions {
+  margin-left: 2px;
+}
+
+button#wifi-password-connect,
+button#wifi-password-cancel {
+  background: alpha(#44475a, 0.72);
+  border: 1px solid alpha(#6272a4, 0.42);
+  border-radius: 9px;
+  color: #f8f8f2;
+  min-height: 0;
+  min-width: 0;
+  padding: 5px 7px;
+}
+
+button#wifi-password-connect label,
+button#wifi-password-cancel label {
+  font-size: 12px;
+}

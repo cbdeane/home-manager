@@ -43,6 +43,12 @@
     powerOnBoot = true;
   };
 
+  # Firmware update support via fwupdmgr/LVFS.
+  services.fwupd.enable = true;
+
+  # Periodic SSD/NVMe trim.
+  services.fstrim.enable = true;
+
   # Set your time zone.
   time.timeZone = "Pacific/Honolulu";
 

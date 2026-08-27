@@ -8,11 +8,11 @@
   agsPackages = inputs.ags.packages.${pkgs.stdenv.hostPlatform.system};
   appleMusic = pkgs.writeShellApplication {
     name = "apple-music";
-    runtimeInputs = [pkgs.ungoogled-chromium];
+    runtimeInputs = [pkgs.google-chrome];
     text = ''
-      exec chromium \
+      exec google-chrome-stable \
         --user-data-dir="''${XDG_DATA_HOME:-$HOME/.local/share}/apple-music-chromium" \
-        --app=https://music.apple.com \
+        --app=https://music.apple.com/us/ \
         --class=AppleMusic \
         "$@"
     '';

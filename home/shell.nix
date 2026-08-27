@@ -81,13 +81,19 @@
     syntaxHighlighting.enable = true;
     defaultKeymap = "viins";
 
-    shellAliases = {
-      nrs = "sudo nixos-rebuild switch --flake /home/char0/nixconfig#nixos";
-      nru = "nix flake update --flake /home/char0/nixconfig && sudo nixos-rebuild switch --flake /home/char0/nixconfig#nixos";
-      arturo = "ssh -i ~/.ssh/arturo root@arturo";
-      ntfy = "ssh -i ~/.ssh/char0 ubuntu@ntfy";
-      cat = "bat";
-    };
+      shellAliases = {
+        arturo = "ssh -i ~/.ssh/arturo root@arturo";
+        ntfy = "ssh -i ~/.ssh/char0 ubuntu@ntfy";
+        cat = "bat";
+        ls = "eza --icons";
+        ll = "eza -la --icons --git";
+        la = "eza -la --icons";
+        lt = "eza --tree --icons";
+        du = "dust";
+        df = "duf";
+        top = "btop";
+        htop = "btop";
+      };
 
     history = {
       path = "$HOME/.histfile";
@@ -123,6 +129,51 @@
       }
 
       cursor_mode
+
+      nvd-summary() {
+          nvd diff "$1" "$2" | while IFS= read -r line; do
+              case "$line" in
+                  "<<< "*|">>> "*|"Closure size:"*|"") ;;
+                  *) printf '%s\n' "$line" ;;
+              esac
+          done
+      }
+
+      nvd-last() {
+          local generations previous current
+          generations=(''${(f)"$(nix-env --profile /nix/var/nix/profiles/system --list-generations | awk '{ print $1 }')"})
+
+          if [ "''${#generations[@]}" -lt 2 ]; then
+              printf 'Not enough system generations to diff.\n' >&2
+              return 1
+          fi
+
+          previous="''${generations[-2]}"
+          current="''${generations[-1]}"
+          nvd diff "/nix/var/nix/profiles/system-$previous-link" "/nix/var/nix/profiles/system-$current-link"
+      }
+
+      nrb() {
+          nixos-rebuild build --flake /home/char0/nixconfig#nixos || return
+          nvd diff /run/current-system /home/char0/nixconfig/result
+      }
+
+      nrs() {
+          local before
+          before="$(readlink -f /run/current-system)" || return
+
+          sudo nixos-rebuild switch --flake /home/char0/nixconfig#nixos || return
+          nvd-summary "$before" /run/current-system
+      }
+
+      nru() {
+          local before
+          before="$(readlink -f /run/current-system)" || return
+
+          nix flake update --flake /home/char0/nixconfig || return
+          sudo nixos-rebuild switch --flake /home/char0/nixconfig#nixos || return
+          nvd-summary "$before" /run/current-system
+      }
 
       export TERM=xterm-ghostty
       ssh() {

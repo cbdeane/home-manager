@@ -13,6 +13,7 @@ const PANEL_HEIGHT = 500
 const SYSTEM_PANEL_HEIGHT = 40
 const SYSTEM_PANEL_WIDTH = 760
 const AGENT_PATH = "/com/char0/ags/bluetooth_agent"
+const A2DP_AUDIO_SINK_UUID = "0000110b-0000-1000-8000-00805f9b34fb"
 const VOLUME_SOUND = "/run/current-system/sw/share/sounds/freedesktop/stereo/audio-volume-change.oga"
 
 let panel: Astal.Window
@@ -173,6 +174,22 @@ function errorMessage(error: unknown) {
   return String(error)
 }
 
+function bluetoothErrorMessage(error: unknown) {
+  const message = errorMessage(error)
+
+  if (message.includes("br-connection-create-socket")) return "speaker is not accepting a Bluetooth audio connection"
+  if (message.includes("No discovery started")) return "scan already stopped"
+  if (message.includes("AlreadyExists")) return "device is already paired"
+  if (message.includes("AuthenticationCanceled")) return "pairing was cancelled"
+  if (message.includes("AuthenticationFailed")) return "pairing authentication failed"
+  if (message.includes("NotReady")) return "Bluetooth adapter is not ready"
+  if (message.includes("NotAvailable")) return "device is not available"
+  if (message.includes("org.bluez.Error.Failed")) return message.split("org.bluez.Error.Failed:").pop()?.trim() || "Bluetooth operation failed"
+  if (message.includes("GDBus.Error:")) return message.split("GDBus.Error:").pop()?.trim() || "Bluetooth operation failed"
+
+  return message
+}
+
 function delay(ms: number) {
   return new Promise<void>((resolve) => {
     GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {
@@ -255,6 +272,20 @@ async function disconnectDevice(device: Bluetooth.Device) {
   console.log(`Bluetooth disconnect finished: ${name}`)
 }
 
+function connectAudioSinkProfile(device: Bluetooth.Device) {
+  Gio.DBus.system.call_sync(
+    "org.bluez",
+    bluezDevicePath(device),
+    "org.bluez.Device1",
+    "ConnectProfile",
+    new GLib.Variant("(s)", [A2DP_AUDIO_SINK_UUID]),
+    null,
+    Gio.DBusCallFlags.NONE,
+    -1,
+    null,
+  )
+}
+
 function registerAgent() {
   if (agentRegistered) return
 
@@ -334,8 +365,9 @@ function startDiscovery() {
     setScanStatus("scanning")
     console.log("Bluetooth discovery started")
   } catch (error) {
-    setScanStatus(`Scan failed: ${error}`)
-    console.log(`Bluetooth discovery failed: ${error}`)
+    const message = bluetoothErrorMessage(error)
+    setScanStatus(`Scan failed: ${message}`)
+    console.log(`Bluetooth discovery failed: ${message}`)
   }
 }
 
@@ -347,7 +379,8 @@ function stopDiscovery() {
   try {
     if (adapter?.discovering) adapter.stop_discovery()
   } catch (error) {
-    console.log(`Bluetooth stop discovery failed: ${error}`)
+    const message = bluetoothErrorMessage(error)
+    if (message !== "scan already stopped") console.log(`Bluetooth stop discovery failed: ${message}`)
   }
 }
 
@@ -451,8 +484,11 @@ function isAppleMusicPlayer(player: any) {
   const busName = String(gobjProp(player, "busName") || gobjProp(player, "bus_name") || "").toLowerCase()
   const identity = String(gobjProp(player, "identity") || "").toLowerCase()
   const hasTrack = !!String(gobjProp(player, "title") || "") && !!String(gobjProp(player, "artist") || "")
+  const isSupportedBrowser =
+    busName.includes("chromium") || busName.includes("chrome") ||
+    identity.includes("chromium") || identity.includes("chrome")
 
-  return hasTrack && (busName.includes("chromium") || identity.includes("chromium"))
+  return hasTrack && isSupportedBrowser
 }
 
 function appleMusicPlayer() {
@@ -1037,15 +1073,21 @@ async function toggleDevice(device: Bluetooth.Device) {
       registerAgent()
       device.pair()
       await waitForPaired(device)
-      device.trusted = true
     }
 
+    device.trusted = true
+
     setDeviceAction(address, "connecting")
-    await device.connect_device()
+    try {
+      await device.connect_device()
+    } catch (error) {
+      console.log(`Bluetooth generic connect failed for ${deviceName(device)}: ${bluetoothErrorMessage(error)}`)
+      connectAudioSinkProfile(device)
+    }
     setDeviceAction(address, null)
     refreshDeviceList()
   } catch (error) {
-    setDeviceAction(address, `failed: ${errorMessage(error)}`)
+    setDeviceAction(address, `failed: ${bluetoothErrorMessage(error)}`)
     refreshDeviceList()
   }
 }

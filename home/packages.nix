@@ -14,8 +14,13 @@
     # Terminal utilities
     ripgrep
     htop
+    btop
     bat
     jq
+    eza
+    dust
+    duf
+    nvd
     tree
     fastfetch
 

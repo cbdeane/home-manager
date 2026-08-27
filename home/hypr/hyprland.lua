@@ -54,6 +54,7 @@ local menu        = "walker-open"
 --   hl.exec_cmd("waybar & hyprpaper & firefox")
 -- end)
 hl.on("hyprland.start", function ()
+    hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
     hl.exec_cmd("pgrep -f '/bin/mako' >/dev/null || mako")
     hl.exec_cmd("sh -c 'pgrep -x awww-daemon >/dev/null || awww-daemon; sleep 0.2; [ -f /home/char0/.cache/current-wallpaper ] && awww img \"$(cat /home/char0/.cache/current-wallpaper)\" --transition-type fade --transition-duration 0.1'")
     hl.exec_cmd("hyprctl setcursor Breeze_Light 26")
@@ -456,4 +457,12 @@ hl.window_rule({
 
     move  = "20 monitor_h-120",
     float = true,
+})
+
+hl.window_rule({
+    name  = "ascii-screensaver",
+    match = { title = "^ascii-screensaver$" },
+
+    float      = true,
+    fullscreen = true,
 })

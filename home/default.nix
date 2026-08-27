@@ -12,6 +12,7 @@
     ./machines/l14/monitors.nix
     ./mako.nix
     ./reminders.nix
+    ./screensaver.nix
     ./desktop.nix
   ];
 

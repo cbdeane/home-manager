@@ -2,6 +2,7 @@ import { For, createBinding, createState } from "ags"
 import app from "ags/gtk4/app"
 import { Astal, Gdk, Gtk } from "ags/gtk4"
 import Bluetooth from "gi://AstalBluetooth"
+import Mpris from "gi://AstalMpris"
 import Network from "gi://AstalNetwork"
 import Gio from "gi://Gio"
 import GLib from "gi://GLib"
@@ -19,9 +20,11 @@ let wifiPanel: Astal.Window
 let systemPanel: Astal.Window
 let wallpaperPanel: Astal.Window
 let volumeOsd: Astal.Window
+let nowPlayingToast: Astal.Window
 let agent: Gio.DBusExportedObject | null = null
 let agentRegistered = false
 const bluetooth = Bluetooth.get_default()
+const mpris = Mpris.get_default()
 const network = Network.get_default()
 const [scanStatus, setScanStatus] = createState("idle")
 const [deviceActions, setDeviceActions] = createState<Record<string, string>>({})
@@ -41,6 +44,7 @@ type WallpaperItem = {
 }
 const wallpaperDir = GLib.build_filenamev([GLib.get_home_dir(), "pictures", "wallpaper"])
 const wallpaperCacheDir = GLib.build_filenamev([GLib.get_user_cache_dir(), "wallpaper", "thumbnails"])
+const nowPlayingArtCacheDir = GLib.build_filenamev([GLib.get_user_cache_dir(), "ags", "apple-music-art"])
 const currentWallpaperFile = GLib.build_filenamev([GLib.get_user_cache_dir(), "current-wallpaper"])
 const wallpaperExtensions = new Set([
   "avif", "bmp", "cur", "dds", "exr", "ff", "gif", "hdr", "heic", "heif", "ico", "j2c", "j2k", "jp2",
@@ -86,7 +90,17 @@ const [systemStats, setSystemStats] = createState<SystemStats>({
 })
 const [volumePercent, setVolumePercent] = createState(0)
 const [volumeMuted, setVolumeMuted] = createState(false)
+const [nowPlayingVisible, setNowPlayingVisible] = createState(false)
+const [nowPlayingTitle, setNowPlayingTitle] = createState("")
+const [nowPlayingArtist, setNowPlayingArtist] = createState("")
+const [nowPlayingAlbum, setNowPlayingAlbum] = createState("")
+const [nowPlayingPaintable, setNowPlayingPaintable] = createState<Gdk.Paintable | null>(null)
+const [nowPlayingIsPlaying, setNowPlayingIsPlaying] = createState(false)
 let volumeHideTimer = 0
+let nowPlayingHideTimer = 0
+let nowPlayingRefreshTimer = 0
+let lastNowPlayingKey = ""
+let nowPlayingInitialized = false
 let previousCpuSample: { idle: number, total: number } | null = null
 const notifiedBatteryThresholds = new Set<number>()
 
@@ -416,6 +430,179 @@ function changeVolume(action: "up" | "down" | "mute") {
   showVolumeOsd()
 
   if (action !== "mute") runAsync(`pw-play ${VOLUME_SOUND}`)
+}
+
+function listMprisPlayers() {
+  const players = []
+
+  for (let i = 0; i < mpris.get_n_items(); i += 1) {
+    const player = mpris.get_item(i)
+    if (player) players.push(player)
+  }
+
+  return players
+}
+
+function gobjProp(player: any, name: string): any {
+  return player[name]
+}
+
+function isAppleMusicPlayer(player: any) {
+  const busName = String(gobjProp(player, "busName") || gobjProp(player, "bus_name") || "").toLowerCase()
+  const identity = String(gobjProp(player, "identity") || "").toLowerCase()
+  const hasTrack = !!String(gobjProp(player, "title") || "") && !!String(gobjProp(player, "artist") || "")
+
+  return hasTrack && (busName.includes("chromium") || identity.includes("chromium"))
+}
+
+function appleMusicPlayer() {
+  return listMprisPlayers().find(isAppleMusicPlayer) as any | undefined
+}
+
+function playerIsPlaying(player: any) {
+  const status = gobjProp(player, "playbackStatus") ?? gobjProp(player, "playback_status")
+  const s = String(status).toLowerCase()
+
+  return status === Mpris.PlaybackStatus.PLAYING || status === 0 || s === "0" || s === "playing"
+}
+
+function cachedArtPath(sourcePath: string): string {
+  const hash = GLib.compute_checksum_for_string(GLib.ChecksumType.SHA256, sourcePath, -1)
+  return GLib.build_filenamev([nowPlayingArtCacheDir, `${hash}`])
+}
+
+function copyArtToCache(sourcePath: string): string | null {
+  if (!sourcePath) return null
+
+  try {
+    GLib.mkdir_with_parents(nowPlayingArtCacheDir, 0o755)
+  } catch (_err) {
+    // dir may already exist
+  }
+
+  const destPath = cachedArtPath(sourcePath)
+
+  try {
+    const source = Gio.File.new_for_path(sourcePath)
+    const dest = Gio.File.new_for_path(destPath)
+
+    if (dest.query_exists(null)) return destPath
+
+    source.copy(dest, Gio.FileCopyFlags.OVERWRITE, null, null)
+    return destPath
+  } catch (error) {
+    console.log(`Art cache copy failed: ${sourcePath} -> ${destPath}: ${errorMessage(error)}`)
+    return null
+  }
+}
+
+function loadNowPlayingArt(sourcePath: string) {
+  if (!sourcePath) {
+    setNowPlayingPaintable(null)
+    return
+  }
+
+  const cachedPath = copyArtToCache(sourcePath)
+
+  if (!cachedPath) {
+    setNowPlayingPaintable(null)
+    return
+  }
+
+  try {
+    setNowPlayingPaintable(Gdk.Texture.new_from_file(Gio.File.new_for_path(cachedPath)))
+  } catch (error) {
+    console.log(`Now playing art load failed: ${cachedPath}: ${errorMessage(error)}`)
+    setNowPlayingPaintable(null)
+  }
+}
+
+function scheduleNowPlayingRefresh(player: any) {
+  if (nowPlayingRefreshTimer) GLib.source_remove(nowPlayingRefreshTimer)
+
+  nowPlayingRefreshTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
+    nowPlayingRefreshTimer = 0
+    updateNowPlayingFromPlayer(player, false)
+    return GLib.SOURCE_REMOVE
+  })
+}
+
+function updateNowPlayingFromPlayer(player: any, force: boolean) {
+  const title = String(gobjProp(player, "title") || "")
+  const artist = String(gobjProp(player, "artist") || "")
+  if (!title || !artist) return
+
+  const trackKey = [String(gobjProp(player, "busName") || gobjProp(player, "bus_name") || ""), artist, title, String(gobjProp(player, "album") || "")].join("\u0000")
+  const isTrackChange = trackKey !== lastNowPlayingKey
+
+  if (isTrackChange) lastNowPlayingKey = trackKey
+
+  setNowPlayingTitle(title)
+  setNowPlayingArtist(artist)
+  setNowPlayingAlbum(String(gobjProp(player, "album") || ""))
+  setNowPlayingIsPlaying(playerIsPlaying(player))
+  loadNowPlayingArt(String(gobjProp(player, "coverArt") || gobjProp(player, "cover_art") || ""))
+
+  const art = gobjProp(player, "coverArt") || gobjProp(player, "cover_art") || ""
+  const playing = playerIsPlaying(player)
+  console.log(`Now playing: ${artist} - ${title} art=${art} playing=${playing} trackChange=${isTrackChange} force=${force}`)
+
+  if (!nowPlayingToast) return
+
+  if (isTrackChange || force) {
+    setNowPlayingVisible(true)
+    nowPlayingToast.visible = true
+    nowPlayingToast.present()
+
+    if (nowPlayingHideTimer) GLib.source_remove(nowPlayingHideTimer)
+    nowPlayingHideTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 6500, () => {
+      setNowPlayingVisible(false)
+      nowPlayingToast.visible = false
+      nowPlayingHideTimer = 0
+      return GLib.SOURCE_REMOVE
+    })
+  }
+}
+
+function showNowPlaying(player = appleMusicPlayer(), force = false) {
+  if (!player) return
+  updateNowPlayingFromPlayer(player, force)
+}
+
+function controlAppleMusic(action: "previous" | "play-pause" | "next") {
+  const player = appleMusicPlayer()
+  if (!player) return
+
+  if (action === "previous") player.previous()
+  else if (action === "next") player.next()
+  else player.play_pause()
+
+  GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
+    scheduleNowPlayingRefresh(player)
+    return GLib.SOURCE_REMOVE
+  })
+}
+
+function watchMprisPlayer(player: any) {
+  player.connect("notify::title", () => scheduleNowPlayingRefresh(player))
+  player.connect("notify::artist", () => scheduleNowPlayingRefresh(player))
+  player.connect("notify::album", () => scheduleNowPlayingRefresh(player))
+  player.connect("notify::cover-art", () => scheduleNowPlayingRefresh(player))
+  player.connect("notify::playback-status", () => scheduleNowPlayingRefresh(player))
+}
+
+function initNowPlayingWatcher() {
+  listMprisPlayers().forEach(watchMprisPlayer)
+  mpris.connect("player-added", (_mpris, player) => watchMprisPlayer(player))
+
+  GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1200, () => {
+    const player = appleMusicPlayer()
+    if (player && !nowPlayingInitialized) {
+      updateNowPlayingFromPlayer(player, true)
+      nowPlayingInitialized = true
+    }
+    return GLib.SOURCE_REMOVE
+  })
 }
 
 function readTextFile(path: string) {
@@ -1240,6 +1427,81 @@ function VolumeOsd() {
   )
 }
 
+function NowPlayingToast() {
+  return (
+    <window
+      $={(ref) => {
+        nowPlayingToast = ref
+      }}
+      name="now-playing-toast"
+      namespace="now-playing-toast"
+      anchor={TOP | RIGHT}
+      defaultWidth={430}
+      defaultHeight={128}
+      exclusivity={Astal.Exclusivity.IGNORE}
+      visible={nowPlayingVisible}
+    >
+      <box name="now-playing-shell" orientation={Gtk.Orientation.HORIZONTAL} spacing={14} widthRequest={430} heightRequest={128}>
+        <box name="now-playing-art-frame" widthRequest={92} heightRequest={92} valign={Gtk.Align.CENTER}>
+          <Gtk.Picture
+            name="now-playing-art"
+            paintable={nowPlayingPaintable}
+            contentFit={Gtk.ContentFit.COVER}
+            widthRequest={92}
+            heightRequest={92}
+            visible={nowPlayingPaintable.as((paintable) => !!paintable)}
+          />
+          <box
+            name="now-playing-art-placeholder"
+            widthRequest={92}
+            heightRequest={92}
+            visible={nowPlayingPaintable.as((paintable) => !paintable)}
+          >
+            <image iconName="audio-x-generic-symbolic" pixelSize={36} valign={Gtk.Align.CENTER} halign={Gtk.Align.CENTER} />
+          </box>
+        </box>
+
+        <box name="now-playing-content" orientation={Gtk.Orientation.VERTICAL} spacing={7} valign={Gtk.Align.CENTER} hexpand>
+          <label name="now-playing-kicker" label="Now Playing" halign={Gtk.Align.START} />
+          <label
+            name="now-playing-title"
+            label={nowPlayingTitle}
+            halign={Gtk.Align.START}
+            ellipsize={3}
+            maxWidthChars={32}
+          />
+          <label
+            name="now-playing-artist"
+            label={nowPlayingArtist.as((artist) => artist ? artist : "Unknown Artist")}
+            halign={Gtk.Align.START}
+            ellipsize={3}
+            maxWidthChars={36}
+          />
+          <label
+            name="now-playing-album"
+            label={nowPlayingAlbum}
+            halign={Gtk.Align.START}
+            ellipsize={3}
+            maxWidthChars={36}
+            visible={nowPlayingAlbum.as((album) => !!album)}
+          />
+          <box name="now-playing-controls" orientation={Gtk.Orientation.HORIZONTAL} spacing={8} halign={Gtk.Align.START}>
+            <button name="now-playing-control" onClicked={() => controlAppleMusic("previous")}>
+              <image iconName="media-skip-backward-symbolic" pixelSize={16} />
+            </button>
+            <button name="now-playing-control-primary" onClicked={() => controlAppleMusic("play-pause")}>
+              <image iconName={nowPlayingIsPlaying.as((playing) => playing ? "media-playback-pause-symbolic" : "media-playback-start-symbolic")} pixelSize={17} />
+            </button>
+            <button name="now-playing-control" onClicked={() => controlAppleMusic("next")}>
+              <image iconName="media-skip-forward-symbolic" pixelSize={16} />
+            </button>
+          </box>
+        </box>
+      </box>
+    </window>
+  )
+}
+
 function WallpaperTile({ item }: { item: WallpaperItem }) {
   return (
     <button
@@ -1568,6 +1830,26 @@ app.start({
       return res("ok")
     }
 
+    if (command === "now-playing") {
+      showNowPlaying(appleMusicPlayer(), true)
+      return res("ok")
+    }
+
+    if (command === "now-playing previous") {
+      controlAppleMusic("previous")
+      return res("ok")
+    }
+
+    if (command === "now-playing play-pause") {
+      controlAppleMusic("play-pause")
+      return res("ok")
+    }
+
+    if (command === "now-playing next") {
+      controlAppleMusic("next")
+      return res("ok")
+    }
+
     console.log(`Unknown request: ${JSON.stringify(request)}`)
     return res("unknown command")
   },
@@ -1583,5 +1865,7 @@ app.start({
     app.add_window(SystemPanel())
     app.add_window(WallpaperPanel())
     app.add_window(VolumeOsd())
+    app.add_window(NowPlayingToast())
+    initNowPlayingWatcher()
   },
 })

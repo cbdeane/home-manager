@@ -2,7 +2,8 @@ window#bluetooth-panel,
 window#wifi-panel,
 window#system-panel,
 window#wallpaper-panel,
-window#volume-osd {
+window#volume-osd,
+window#now-playing-toast {
   background: transparent;
   color: #f8f8f2;
   font-family: Hack, monospace;
@@ -12,8 +13,94 @@ window#bluetooth-panel *,
 window#wifi-panel *,
 window#system-panel *,
 window#wallpaper-panel *,
-window#volume-osd * {
+window#volume-osd *,
+window#now-playing-toast * {
   font-family: Hack, monospace;
+}
+
+#now-playing-shell {
+  background: linear-gradient(135deg, alpha(#282a36, 0.96), alpha(#1f2029, 0.94));
+  border: 1px solid alpha(#f8f8f2, 0.62);
+  border-radius: 20px;
+  box-shadow: 0 18px 52px alpha(#000000, 0.48);
+  margin: 14px 18px 0 0;
+  padding: 14px;
+}
+
+#now-playing-art-frame,
+#now-playing-art,
+#now-playing-art-placeholder {
+  border-radius: 15px;
+  min-height: 92px;
+  min-width: 92px;
+}
+
+#now-playing-art-frame {
+  background: alpha(#44475a, 0.5);
+  border: 1px solid alpha(#6272a4, 0.36);
+  box-shadow: 0 10px 26px alpha(#000000, 0.34);
+}
+
+#now-playing-art-placeholder {
+  color: #bd93f9;
+}
+
+#now-playing-content {
+  min-width: 0;
+}
+
+#now-playing-kicker {
+  color: #50fa7b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#now-playing-title {
+  color: #f8f8f2;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+#now-playing-artist {
+  color: #ff79c6;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#now-playing-album {
+  color: #6272a4;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#now-playing-controls {
+  margin-top: 2px;
+}
+
+button#now-playing-control,
+button#now-playing-control-primary {
+  background: alpha(#44475a, 0.72);
+  border: 1px solid alpha(#6272a4, 0.48);
+  border-radius: 999px;
+  color: #f8f8f2;
+  min-height: 26px;
+  min-width: 26px;
+  padding: 0;
+}
+
+button#now-playing-control-primary {
+  background: alpha(#bd93f9, 0.28);
+  border-color: alpha(#bd93f9, 0.72);
+  min-height: 30px;
+  min-width: 30px;
+}
+
+button#now-playing-control:hover,
+button#now-playing-control-primary:hover {
+  background: alpha(#ff79c6, 0.32);
+  border-color: alpha(#ff79c6, 0.82);
 }
 
 #volume-osd-shell {

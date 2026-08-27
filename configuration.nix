@@ -71,7 +71,7 @@
   users.users."char0" = {
     isNormalUser = true;
     description = "Charles Deane";
-    extraGroups = ["networkmanager" "wheel"];
+    extraGroups = ["networkmanager" "wheel" "docker"];
   };
 
   # Allow unfree packages
@@ -196,10 +196,6 @@
   # OCI container virtualization
   virtualisation.podman.enable = true;
   virtualisation.docker.enable = true;
-  virtualisation.docker.rootless = {
-    enable = true;
-    setSocketVariable = true;
-  };
 
   # Enable zsh
   programs.zsh.enable = true;

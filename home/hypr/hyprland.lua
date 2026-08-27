@@ -267,6 +267,12 @@ hl.device({
 ---- KEYBINDINGS ----
 ---------------------
 
+hl.config({
+    binds = {
+        hide_special_on_workspace_change = true,
+    },
+})
+
 local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 local screenshotCmd = [[wayfreeze & PID=$!; sleep .1; grim -g "$(slurp)" - | wl-copy; kill $PID]]
 local exitPromptCmd = [[sh -c 'choice=$(printf "No\nYes, exit Hyprland\n" | walker --dmenu --exit -p "Exit Hyprland?"); [ "$choice" = "Yes, exit Hyprland" ] && hyprctl dispatch exit']]

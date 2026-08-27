@@ -1,7 +1,31 @@
-{ config, inputs, lib, pkgs, ... }:
-
-let
+{
+  config,
+  inputs,
+  lib,
+  pkgs,
+  ...
+}: let
   agsPackages = inputs.ags.packages.${pkgs.stdenv.hostPlatform.system};
+  appleMusic = pkgs.writeShellApplication {
+    name = "apple-music";
+    runtimeInputs = [pkgs.ungoogled-chromium];
+    text = ''
+      exec chromium \
+        --user-data-dir="''${XDG_DATA_HOME:-$HOME/.local/share}/apple-music-chromium" \
+        --app=https://music.apple.com \
+        --class=AppleMusic \
+        "$@"
+    '';
+  };
+  appleMusicDesktop = pkgs.makeDesktopItem {
+    name = "apple-music";
+    desktopName = "Apple Music";
+    comment = "Listen to Apple Music";
+    exec = "apple-music";
+    terminal = false;
+    categories = ["Audio" "Music" "Player"];
+    icon = "multimedia-player";
+  };
   usbNotify = pkgs.writeShellScript "udiskie-usb-notify" ''
     event="$1"
     label="''${2:-''${3:-USB drive}}"
@@ -36,11 +60,13 @@ let
         ;;
     esac
   '';
-in
+in {
+  xdg.enable = true;
 
-{
   home.packages = [
     pkgs.libnotify
+    appleMusic
+    appleMusicDesktop
     (pkgs.writeShellApplication {
       name = "walker-open";
       runtimeInputs = [
@@ -65,9 +91,9 @@ in
         pkgs.procps
       ];
       text = ''
-        if ! pgrep -x awww-daemon >/dev/null; then
-          awww-daemon >/tmp/awww-daemon.log 2>&1 &
-        fi
+          if ! pgrep -x awww-daemon >/dev/null; then
+            awww-daemon >/tmp/awww-daemon.log 2>&1 &
+          fi
 
         exec ags toggle wallpaper-panel
       '';
@@ -118,8 +144,8 @@ in
     enable = true;
 
     defaultApplications = {
-      "inode/directory" = [ "nemo.desktop" ];
-      "application/x-gnome-saved-search" = [ "nemo.desktop" ];
+      "inode/directory" = ["nemo.desktop"];
+      "application/x-gnome-saved-search" = ["nemo.desktop"];
     };
   };
 
@@ -138,17 +164,17 @@ in
   };
 
   xdg.userDirs = {
-   enable = true;
+    enable = true;
 
-   desktop = "$HOME";
-   download = "$HOME/downloads";
-   pictures = "$HOME/pictures";
+    desktop = "$HOME";
+    download = "$HOME/downloads";
+    pictures = "$HOME/pictures";
 
-   documents = "$HOME/documents";
-   music = "$HOME";
-   publicShare = "$HOME/share";
-   templates = "$HOME";
-   videos = "$HOME";
+    documents = "$HOME/documents";
+    music = "$HOME";
+    publicShare = "$HOME/share";
+    templates = "$HOME";
+    videos = "$HOME";
   };
 
   xdg.desktopEntries.wallpaper = {
@@ -157,7 +183,7 @@ in
     exec = "wallpaper";
     icon = "preferences-desktop-wallpaper";
     terminal = false;
-    categories = [ "Settings" "Utility" ];
+    categories = ["Settings" "Utility"];
   };
 
   programs.walker = {
@@ -346,12 +372,13 @@ in
     configDir = ./ags;
     extraPackages = [
       agsPackages.bluetooth
+      agsPackages.mpris
       agsPackages.network
     ];
     systemd.enable = true;
   };
 
-  home.activation.restartLaunchers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.restartLaunchers = lib.hm.dag.entryAfter ["writeBoundary"] ''
     XDG_RUNTIME_DIR="/run/user/$(${pkgs.coreutils}/bin/id -u)" \
       $DRY_RUN_CMD ${pkgs.systemd}/bin/systemctl --user restart elephant.service walker.service || true
   '';

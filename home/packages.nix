@@ -1,6 +1,4 @@
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [
     # Network utilities
     nmap
@@ -34,6 +32,8 @@
 
     # Desktop
     pavucontrol
+    brightnessctl
+    playerctl
     awww
     breeze-hacked-cursor-theme
     kdePackages.breeze

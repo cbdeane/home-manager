@@ -6,6 +6,26 @@
   ...
 }: let
   agsPackages = inputs.ags.packages.${pkgs.stdenv.hostPlatform.system};
+  nemoExtensions = pkgs.symlinkJoin {
+    name = "nemo-extensions";
+    paths = [
+      pkgs.nemo-fileroller
+    ];
+  };
+  nemoWithExtensions = pkgs.symlinkJoin {
+    name = "nemo-with-extensions";
+    paths = [
+      pkgs.nemo
+    ];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram $out/bin/nemo \
+        --set NEMO_EXTENSION_DIR ${nemoExtensions}/lib/nemo/extensions-3.0
+
+      wrapProgram $out/libexec/nemo-extensions-list \
+        --set NEMO_EXTENSION_DIR ${nemoExtensions}/lib/nemo/extensions-3.0
+    '';
+  };
   appleMusic = pkgs.writeShellApplication {
     name = "apple-music";
     runtimeInputs = [pkgs.google-chrome];
@@ -65,6 +85,7 @@ in {
 
   home.packages = [
     pkgs.libnotify
+    nemoWithExtensions
     appleMusic
     appleMusicDesktop
     (pkgs.writeShellApplication {
@@ -144,8 +165,42 @@ in {
     enable = true;
 
     defaultApplications = {
+      "application/pdf" = ["firefox.desktop"];
+      "application/x-pdf" = ["firefox.desktop"];
+      "application/gzip" = ["org.gnome.FileRoller.desktop"];
+      "application/vnd.rar" = ["org.gnome.FileRoller.desktop"];
+      "application/x-7z-compressed" = ["org.gnome.FileRoller.desktop"];
+      "application/x-bzip2" = ["org.gnome.FileRoller.desktop"];
+      "application/x-bzip-compressed-tar" = ["org.gnome.FileRoller.desktop"];
+      "application/x-compressed-tar" = ["org.gnome.FileRoller.desktop"];
+      "application/x-gzip" = ["org.gnome.FileRoller.desktop"];
+      "application/x-rar" = ["org.gnome.FileRoller.desktop"];
+      "application/x-tar" = ["org.gnome.FileRoller.desktop"];
+      "application/x-xz" = ["org.gnome.FileRoller.desktop"];
+      "application/x-xz-compressed-tar" = ["org.gnome.FileRoller.desktop"];
+      "application/zip" = ["org.gnome.FileRoller.desktop"];
+      "application/xhtml+xml" = ["firefox.desktop"];
+      "application/x-extension-htm" = ["firefox.desktop"];
+      "application/x-extension-html" = ["firefox.desktop"];
+      "application/x-extension-shtml" = ["firefox.desktop"];
+      "application/x-extension-xht" = ["firefox.desktop"];
+      "application/x-extension-xhtml" = ["firefox.desktop"];
+      "image/avif" = ["org.gnome.Loupe.desktop"];
+      "image/bmp" = ["org.gnome.Loupe.desktop"];
+      "image/gif" = ["org.gnome.Loupe.desktop"];
+      "image/jpeg" = ["org.gnome.Loupe.desktop"];
+      "image/png" = ["org.gnome.Loupe.desktop"];
+      "image/svg+xml" = ["org.gnome.Loupe.desktop"];
+      "image/tiff" = ["org.gnome.Loupe.desktop"];
+      "image/webp" = ["org.gnome.Loupe.desktop"];
       "inode/directory" = ["nemo.desktop"];
       "application/x-gnome-saved-search" = ["nemo.desktop"];
+      "text/html" = ["firefox.desktop"];
+      "text/plain" = ["nvim.desktop"];
+      "x-scheme-handler/about" = ["firefox.desktop"];
+      "x-scheme-handler/http" = ["firefox.desktop"];
+      "x-scheme-handler/https" = ["firefox.desktop"];
+      "x-scheme-handler/unknown" = ["firefox.desktop"];
     };
   };
 

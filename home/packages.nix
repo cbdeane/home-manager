@@ -27,8 +27,11 @@
     # Image editing
     imagemagick
 
+    # Image viewers
+    loupe
+
     # File managers
-    nemo
+    file-roller
     udiskie
 
     # Developer utils

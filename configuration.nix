@@ -135,9 +135,9 @@
 
     # System authentication and archives
     gnupg
-    xarchiver
     pinentry-curses
     unzip
+    zip
     p7zip
     unrar
 

@@ -21,6 +21,7 @@
     dust
     duf
     nvd
+    pwgen
     tree
     fastfetch
 
@@ -37,6 +38,14 @@
     # Developer utils
     distrobox
     postman
+    kubectl
+    talosctl
+    k9s
+
+    # Secrets management and future enrollment tooling
+    sops
+    age
+    ssh-to-age
 
     # Desktop
     pavucontrol

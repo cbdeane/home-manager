@@ -167,8 +167,9 @@
       }
 
       nrb() {
-          nixos-rebuild build --flake /home/char0/nixconfig#nixos || return
-          nvd diff /run/current-system /home/char0/nixconfig/result
+          local system
+          system="$(nix build path:/home/char0/nixconfig#nixosConfigurations.nixos.config.system.build.toplevel --no-link --print-out-paths)" || return
+          nvd diff /run/current-system "$system"
       }
 
       nrs() {

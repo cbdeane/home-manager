@@ -4,7 +4,9 @@
   imports = [
     inputs.ags.homeManagerModules.default
     inputs.walker.homeManagerModules.default
+    inputs.sops-nix.homeManagerModules.sops
     ./packages.nix
+    ./opencode.nix
     ./shell.nix
     ./neovim.nix
     ./ghostty.nix

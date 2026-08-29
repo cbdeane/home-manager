@@ -1,0 +1,8 @@
+keys:
+  - &char0 age1z73jqyxvw8jm4vjuzh6e54ypx6h28gqrrm6swvdhlfwtwcmzdvsspcavyh
+
+creation_rules:
+  - path_regex: encrypted/.*
+    key_groups:
+      - age:
+          - *char0

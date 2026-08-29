@@ -1,0 +1,72 @@
+name: Update OpenCode
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+
+      - name: Find latest stable release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh api repos/anomalyco/opencode/releases/latest --jq .tag_name)
+          version=${tag#v}
+          current=$(sed -n 's|.*github:anomalyco/opencode/v\([^";]*\).*|\1|p' flake.nix)
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Unexpected release tag: $tag" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == "$current" ]]; then
+            echo "update=false" >> "$GITHUB_OUTPUT"
+          else
+            sed -i "s|github:anomalyco/opencode/v$current|github:anomalyco/opencode/v$version|" flake.nix
+            echo "update=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update lock file
+        if: steps.release.outputs.update == 'true'
+        run: nix flake update opencode
+
+      - name: Evaluate configuration
+        if: steps.release.outputs.update == 'true'
+        run: nix flake check --no-build
+
+      - name: Build and verify OpenCode
+        if: steps.release.outputs.update == 'true'
+        env:
+          EXPECTED_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          out=$(nix build --no-link --print-out-paths .#checks.x86_64-linux.opencode)
+          actual=$("$out/bin/opencode" --version)
+          [[ "$actual" == "$EXPECTED_VERSION"* ]]
+
+      - name: Open update pull request
+        if: steps.release.outputs.update == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: automation/opencode-stable
+          delete-branch: true
+          commit-message: "chore: update OpenCode to ${{ steps.release.outputs.version }}"
+          title: "chore: update OpenCode to ${{ steps.release.outputs.version }}"
+          body: |
+            Updates the pinned upstream OpenCode flake to stable release `${{ steps.release.outputs.version }}`.
+
+            The workflow evaluated the NixOS configuration, built OpenCode, and verified the resulting version.

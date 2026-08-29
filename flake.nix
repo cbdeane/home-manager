@@ -14,6 +14,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    opencode.url = "github:anomalyco/opencode/v1.18.25";
+
     astal = {
       url = "github:aylur/astal";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -38,6 +40,8 @@
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs: {
+    checks.x86_64-linux.opencode = inputs.opencode.packages.x86_64-linux.opencode;
+
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
 

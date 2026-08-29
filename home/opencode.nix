@@ -1,8 +1,9 @@
-{ config, pkgs, ... }:
+{ config, inputs, pkgs, ... }:
 let
   mcpPackages = pkgs.callPackage ../pkgs/mcp.nix { };
 in {
   home.packages = [
+    inputs.opencode.packages.${pkgs.stdenv.hostPlatform.system}.opencode
     mcpPackages.kubernetes-mcp-server
     mcpPackages.mcp-proxmox
   ];
@@ -38,6 +39,7 @@ in {
       force = true;
       text = builtins.toJSON {
         "$schema" = "https://opencode.ai/config.json";
+        autoupdate = false;
         default_agent = "build";
         small_model = "openai/gpt-5.6-luna";
         enabled_providers = [ "openai" ];

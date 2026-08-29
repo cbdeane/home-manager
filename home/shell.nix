@@ -197,7 +197,6 @@
       case "$TERM" in xterm-color|*-256color|xterm-ghostty) color_prompt=yes;; esac
 
       export GPG_TTY=$(tty)
-      export PATH=$HOME/.opencode/bin:$PATH
     '';
   };
 }

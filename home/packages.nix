@@ -41,6 +41,7 @@
     kubectl
     talosctl
     k9s
+    gitleaks
 
     # Secrets management and future enrollment tooling
     sops

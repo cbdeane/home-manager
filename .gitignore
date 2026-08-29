@@ -28,6 +28,11 @@ result-*
 # Local secrets and machine-private material
 secrets/
 secrets.nix
+**/.config/sops/age/keys.txt
+**/sops/age/keys.txt
+age-keys.txt
+*.credentials
+*.token
 *.agekey
 *.key
 *.pem
@@ -35,6 +40,9 @@ secrets.nix
 *.pfx
 id_rsa
 id_ed25519
+kubeconfig
+talosconfig
+proxmox-token
 
 # Backup/temp files
 *.bak

@@ -6,6 +6,7 @@
 
     # Office
     libreoffice
+    drawio
 
     # Multimedia
     gimp
@@ -38,9 +39,15 @@
     # Developer utils
     distrobox
     postman
+
+    # Kubernetes and CI/CD
     kubectl
     talosctl
     k9s
+    opentofu
+    fluxcd
+    glab
+    kubeconform
     gitleaks
 
     # Secrets management and future enrollment tooling

@@ -60,7 +60,7 @@ in
     };
 
     Timer = {
-      OnCalendar = "Mon..Fri *-*-* 13:15:00";
+      OnCalendar = "Sun,Mon..Fri *-*-* 13:15:00";
       Unit = "call-home-reminder.service";
     };
 

@@ -1,5 +1,24 @@
 # Delegation Strategy
 
+## Git and GitLab safeguards
+
+- Before committing, inspect `git status`, the staged diff, and recent log; stage
+  only intended files and never commit secrets. Do not skip hooks or amend unless
+  explicitly requested.
+- Make normal feature-branch pushes only with `opencode-git-push`. Never push a
+  protected branch, force-push, delete refs, replace remotes, or bypass this via
+  aliases, shell indirection, API mutation, alternate clients, or other wrappers.
+- GitLab server-side protected branches, required approvals, and pipelines are
+  the atomic enforcement backstop. Shell command rules are defense in depth, not
+  authorization to bypass policy through another executable or indirection.
+- Before requesting merge approval, report the MR URL, exact head SHA, target,
+  pipeline/check state, unresolved discussions, approval state, and whether it
+  changed since review. Approval is one-shot and bound to project, IID, and SHA.
+- Use `opencode-gitlab-merge <project> <iid> <sha> <target>` only after native
+  human approval. Never auto-merge, self-approve, dismiss reviews, resolve human
+  discussions, or weaken protections or checks. Report audit details after every
+  commit, push, or merge.
+
 The primary agent is responsible for understanding the user's objective,
 decomposing larger work, coordinating dependencies, making consequential
 design decisions, resolving ambiguity, and accepting the final result.
@@ -38,6 +57,31 @@ Use `investigate` when:
 - a difficult bug needs independent analysis
 - concurrency, persistence, state, or complex control flow needs examination
 - the primary agent wants a second analytical opinion
+
+### memory
+Shared engineering-memory curator for retrieving relevant durable engineering
+knowledge and preserving verified durable findings, decisions, constraints, and
+lessons in `luhono/engineering-memory`.
+
+Only `build` orchestrates memory: it may invoke `memory` proactively when
+historical context could affect a task, and should retrieve relevant memory
+before engineering proceeds when practical. Other subagents must not invoke
+`memory`.
+
+Persistence is conservative and checkpoint-based, not mandatory. `build`
+should ask `memory` to evaluate persistence at completed investigations and
+after verified findings, decisions, or fixes, as well as after a successful
+commit, push, or merge. Write only durable, non-duplicative knowledge; no write
+is required when the checkpoint yields nothing worth preserving.
+
+When engineering reveals actionable unresolved work, `memory` captures the
+minimal backlog as a GitLab Issue only after duplicate search, in the owning
+implementation project, with concise context and evidence. It does not use
+engineering-memory as a general backlog and does not create issues for
+speculation, routine TODOs, or completed work. The automatic backlog boundary
+is GitLab.com projects in the `luhono` namespace; report work owned elsewhere
+without creating an issue. `build` must report any automatic memory or issue
+write to the user.
 
 ### review
 Independent read-only reviewer.

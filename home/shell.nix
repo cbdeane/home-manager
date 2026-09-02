@@ -22,6 +22,11 @@
     };
   };
 
+  programs.btop = {
+    enable = true;
+    settings.color_theme = "dracula";
+  };
+
   programs.direnv = {
     enable = true;
     enableZshIntegration = true;

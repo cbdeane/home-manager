@@ -5,7 +5,24 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  elegantSddm = (pkgs.elegant-sddm.override {
+    themeConfig.General.background = "sddm-finlandaurora.jpg";
+  }).overrideAttrs (old: {
+    postInstall = (old.postInstall or "") + ''
+      cp ${./assets/sddm-finlandaurora.jpg} $out/share/sddm/themes/Elegant/sddm-finlandaurora.jpg
+      substituteInPlace $out/share/sddm/themes/Elegant/Main.qml \
+        --replace-fail 'anchors.topMargin: parent.height / 5' \
+          'anchors.topMargin: parent.height * 0.32'
+      substituteInPlace $out/share/sddm/themes/Elegant/UserAvatar.qml \
+        --replace-fail 'ctx.lineWidth = 6' 'ctx.lineWidth = 0'
+    '';
+  });
+  sddmUserIcon = pkgs.runCommand "sddm-user-icon" {} ''
+    mkdir -p $out/share/sddm/faces
+    cp ${./assets/sddm-fastfetch-avatar.png} $out/share/sddm/faces/char0.face.icon
+  '';
+in {
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -143,6 +160,8 @@
 
     # Desktop/session infrastructure
     hyprpolkitagent
+    elegantSddm
+    sddmUserIcon
   ];
 
   # Compatibility for binaries downloaded outside Nix ecosystem
@@ -188,6 +207,8 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
+    theme = "Elegant";
+    extraPackages = [pkgs.kdePackages.qt5compat];
   };
 
   # XDG Portal

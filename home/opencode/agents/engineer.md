@@ -6,10 +6,6 @@ steps: 40
 permission:
   task:
     "*": deny
-  bash:
-    "*": allow
-    "git push *": deny
-    "git commit *": deny
 ---
 
 You are an autonomous software engineer responsible for completing the work

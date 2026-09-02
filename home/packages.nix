@@ -15,7 +15,6 @@
     # Terminal utilities
     ripgrep
     htop
-    btop
     bat
     jq
     eza

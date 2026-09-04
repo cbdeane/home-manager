@@ -7,6 +7,8 @@
     # Office
     libreoffice
     drawio
+    pandoc
+    typst
 
     # Multimedia
     gimp

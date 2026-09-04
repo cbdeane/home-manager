@@ -123,8 +123,21 @@ in {
   # Enable Ozone Wayland support in Chromium and Electron apps
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
-  # Enable CUPS to print documents
+  # Enable CUPS and its graphical administration interface.
   services.printing.enable = true;
+  programs.system-config-printer.enable = true;
+
+  hardware.printers = {
+    ensurePrinters = [
+      {
+        name = "HP_M283fdw";
+        description = "HP Color LaserJet MFP M283fdw";
+        deviceUri = "ipp://192.168.1.215/ipp/print";
+        model = "everywhere";
+      }
+    ];
+    ensureDefaultPrinter = "HP_M283fdw";
+  };
 
   # Removable drive support
   services.udisks2.enable = true;

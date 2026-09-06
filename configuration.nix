@@ -33,6 +33,7 @@ in {
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "nixos"; # Define your hostname.
@@ -106,6 +107,18 @@ in {
     "flakes"
   ];
 
+  nix.gc = {
+    automatic = true;
+    dates = "Sun *-*-* 03:00:00";
+    options = "--delete-older-than 7d";
+    randomizedDelaySec = "45min";
+  };
+
+  nix.optimise = {
+    automatic = true;
+    dates = "Sun *-*-* 05:00:00";
+  };
+
   # Enable gnome keyring
   services.gnome.gnome-keyring.enable = true;
   security.pam.services.sddm.enableGnomeKeyring = true;
@@ -156,6 +169,8 @@ in {
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    cider-2
+
     # Network utilities
     curl
     wget
@@ -165,6 +180,7 @@ in {
 
     # System authentication and archives
     gnupg
+    openssl
     pinentry-curses
     unzip
     zip

@@ -276,7 +276,7 @@ in {
       fi
 
       ${pkgs.coreutils}/bin/mkdir "$tmp/unpack"
-      ${pkgs.gnutar}/bin/tar -xzf "$tmp/package.tgz" -C "$tmp/unpack"
+      ${pkgs.gnutar}/bin/tar --use-compress-program=${pkgs.gzip}/bin/gzip -xf "$tmp/package.tgz" -C "$tmp/unpack"
       test -f "$tmp/unpack/package/dist/tui.js"
       actual_tree="$(${pkgs.nix}/bin/nix --extra-experimental-features nix-command hash path "$tmp/unpack/package")"
       if [ "$actual_tree" != "$tree_hash" ]; then

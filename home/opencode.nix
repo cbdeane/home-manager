@@ -1,6 +1,10 @@
-{ config, inputs, pkgs, ... }:
+{ config, inputs, lib, pkgs, ... }:
 let
   mcpPackages = pkgs.callPackage ../pkgs/mcp.nix { };
+  codexPluginVersion = "0.1.0";
+  codexPluginArchiveSha256 = "5b8edc500d796df448cdbac9686155acd8864abeb713085bff7775573baccbf1";
+  codexPluginTreeHash = "sha256-697KyxMBha8vOR/Kkx6jVFa0lofhswhZnmanhVD0IyI=";
+  codexPluginPath = "${config.home.homeDirectory}/.local/share/opencode/plugins/luhono.gpt-usage-and-reset/${codexPluginVersion}";
   memoryGitlab = pkgs.writeShellApplication {
     name = "opencode-memory-gitlab";
     runtimeInputs = [ pkgs.glab pkgs.jq ];
@@ -241,6 +245,50 @@ in {
     TALOSCONFIG = config.sops.secrets.talosconfig.path;
   };
 
+  home.activation.installCodexUsagePlugin = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    target=${lib.escapeShellArg codexPluginPath}
+    archive_sha256=${lib.escapeShellArg codexPluginArchiveSha256}
+    tree_hash=${lib.escapeShellArg codexPluginTreeHash}
+    parent="$(${pkgs.coreutils}/bin/dirname "$target")"
+    ${pkgs.coreutils}/bin/mkdir -p "$parent"
+    exec 9>"$parent/.install.lock"
+    ${pkgs.util-linux}/bin/flock 9
+
+    if [ -e "$target" ]; then
+      actual_tree="$(${pkgs.nix}/bin/nix --extra-experimental-features nix-command hash path "$target")"
+      if [ ! -f "$target/dist/tui.js" ] || [ "$actual_tree" != "$tree_hash" ]; then
+        echo "refusing to use an unverified Codex plugin directory: $target" >&2
+        exit 1
+      fi
+    else
+      tmp="$(${pkgs.coreutils}/bin/mktemp -d "$parent/.install-${codexPluginVersion}.XXXXXX")"
+      trap '${pkgs.coreutils}/bin/rm -rf "$tmp"' EXIT
+
+      ${pkgs.glab}/bin/glab release download "v${codexPluginVersion}" \
+        --repo "luhono/gpt-usage-and-reset" \
+        --asset-name "package.tgz*" \
+        --dir "$tmp"
+      (cd "$tmp" && ${pkgs.coreutils}/bin/sha256sum -c package.tgz.sha256)
+      actual="$(${pkgs.coreutils}/bin/sha256sum "$tmp/package.tgz" | ${pkgs.coreutils}/bin/cut -d' ' -f1)"
+      if [ "$actual" != "$archive_sha256" ]; then
+        echo "Codex plugin checksum does not match the pinned release" >&2
+        exit 1
+      fi
+
+      ${pkgs.coreutils}/bin/mkdir "$tmp/unpack"
+      ${pkgs.gnutar}/bin/tar -xzf "$tmp/package.tgz" -C "$tmp/unpack"
+      test -f "$tmp/unpack/package/dist/tui.js"
+      actual_tree="$(${pkgs.nix}/bin/nix --extra-experimental-features nix-command hash path "$tmp/unpack/package")"
+      if [ "$actual_tree" != "$tree_hash" ]; then
+        echo "Codex plugin tree does not match the pinned release" >&2
+        exit 1
+      fi
+      ${pkgs.coreutils}/bin/mv -T "$tmp/unpack/package" "$target"
+      trap - EXIT
+      ${pkgs.coreutils}/bin/rm -rf "$tmp"
+    fi
+  '';
+
   sops = {
     age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
     secrets = {
@@ -359,6 +407,13 @@ in {
           };
         };
         tools."proxmox_*" = false;
+      };
+    };
+    ".config/opencode/tui.json" = {
+      force = true;
+      text = builtins.toJSON {
+        "$schema" = "https://opencode.ai/tui.json";
+        plugin = [ "${codexPluginPath}/dist/tui.js" ];
       };
     };
     ".config/opencode/AGENTS.md" = {

@@ -100,8 +100,6 @@
     defaultKeymap = "viins";
 
       shellAliases = {
-        arturo = "ssh -i ~/.ssh/arturo root@arturo";
-        ntfy = "ssh -i ~/.ssh/char0 ubuntu@ntfy";
         cat = "bat --paging=never --style=plain";
         ls = "eza --icons";
         ll = "eza -la --icons --git";

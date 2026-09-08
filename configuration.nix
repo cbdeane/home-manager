@@ -39,10 +39,10 @@ in {
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
-  # Add networking hostName for arturo
   networking.hosts = {
-    "10.0.50.21" = ["arturo"];
-    "10.0.10.33" = ["ntfy"];
+    "10.0.50.21" = [ "arturo" ];
+    "10.0.10.33" = [ "ntfy" ];
+    "192.168.1.109" = [ "beelink" ];
   };
 
   # Enable networking
@@ -180,6 +180,7 @@ in {
 
     # System authentication and archives
     gnupg
+    openbao
     openssl
     pinentry-curses
     unzip
